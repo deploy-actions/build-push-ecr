@@ -8,6 +8,10 @@ inputs:
   Name:
     description: ECR Repository Name
     required: true
+  TagMutability:
+    description: The tag mutability setting for the repository, possible value is one of "MUTABLE", "IMMUTABLE". default is MUTABLE
+    required: false
+    default: MUTABLE
   Tags:
     description: Docker Image Tags
     required: false
@@ -38,12 +42,12 @@ runs:
     - shell: bash
       run: |
         if ! aws ecr describe-repositories --repository-name ${{ inputs.Name }} >/dev/null 2>&1; then
-          aws ecr create-repository --repository-name ${{ inputs.Name }}
+          aws ecr create-repository --repository-name ${{ inputs.Name }} --image-tag-mutability ${{ inputs.TagMutability }}
           echo "::notice title=ECR Repository Created::${{ steps.ecr.outputs.registry }}/${{ inputs.Name }}"
         fi
 
-    # cancel if tag already exists.
     - shell: bash
+      id: image
       run: |
         if [ -z "${{ inputs.IfNotExist }}" ]; then
           if aws ecr describe-images --repository-name ${{ inputs.Name }} --image-ids imageTag=${{ inputs.IfNotExist }} >/dev/null 2>&1; then
@@ -51,9 +55,6 @@ runs:
           fi
         fi
 
-    - shell: bash
-      id: image
-      run: |
         Image=${{ steps.ecr.outputs.registry }}/${{ inputs.Name }}
         docker build -t $Image -f "${{ inputs.Dockerfile }}" "${{ inputs.Path }}"
 
