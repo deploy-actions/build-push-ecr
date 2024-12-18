@@ -49,7 +49,7 @@ runs:
     - shell: bash
       id: image
       run: |
-        if [ -z "${{ inputs.IfNotExist }}" ]; then
+        if [ -n "${{ inputs.IfNotExist }}" ]; then
           if aws ecr describe-images --repository-name ${{ inputs.Name }} --image-ids imageTag=${{ inputs.IfNotExist }} >/dev/null 2>&1; then
             exit 0
           fi
