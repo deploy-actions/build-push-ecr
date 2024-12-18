@@ -11,6 +11,7 @@ inputs:
   Tags:
     description: Docker Image Tags
     required: false
+    default: latest
   IfNotExist:
     description: If the provided image tag already exists, the action will be canceled.
     required: false
@@ -62,8 +63,6 @@ runs:
         for tag in "${raw_tags[@]}"; do
           [[ -n "$tag" ]] && tags+=("$tag")
         done
-
-        docker push $Image
 
         for tag in "${tags[@]}"; do
           docker tag $Image $Image:$tag
