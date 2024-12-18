@@ -73,7 +73,7 @@ runs:
         DIGEST=$(aws ecr describe-images --repository-name ${{ inputs.Name }} --query 'sort_by(imageDetails, &imagePushedAt)[-1].imageDigest' --output text)
         echo "uri=$Image@$DIGEST" >> "$GITHUB_OUTPUT"
 
-  outputs:
-    ImageUri:
-      description: Docker Image URI
-      value: ${{ steps.image.outputs.uri }}
+outputs:
+  ImageUri:
+    description: Docker Image URI
+    value: ${{ steps.image.outputs.uri }}
