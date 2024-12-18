@@ -46,4 +46,4 @@ If the specified ECR Repository does not exist, create repository.
 
 | Name     | Description                                    | Optional |
 | -------- | ---------------------------------------------- | -------- |
-| ImageUri | Image Uri of of the most recently pushed image | ✅       |
+| ImageUri | Image Uri of of the most recently pushed image |          |

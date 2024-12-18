@@ -49,13 +49,17 @@ runs:
     - shell: bash
       id: image
       run: |
+        Image=${{ steps.ecr.outputs.registry }}/${{ inputs.Name }}
+
         if [ -n "${{ inputs.IfNotExist }}" ]; then
           if aws ecr describe-images --repository-name ${{ inputs.Name }} --image-ids imageTag=${{ inputs.IfNotExist }} >/dev/null 2>&1; then
+            echo "Image Tag ${{ inputs.IfNotExist }} is already exist."
+            DIGEST=$(aws ecr describe-images --repository-name ${{ inputs.Name }} --query 'sort_by(imageDetails, &imagePushedAt)[-1].imageDigest' --output text)
+            echo "uri=$Image@$DIGEST" >> "$GITHUB_OUTPUT"
             exit 0
           fi
         fi
 
-        Image=${{ steps.ecr.outputs.registry }}/${{ inputs.Name }}
         docker build -t $Image -f "${{ inputs.Dockerfile }}" "${{ inputs.Path }}"
 
         raw_tags=($(echo "${{ inputs.Tags }}" | tr ',' ' '))
