@@ -20,7 +20,8 @@ If the specified ECR Repository does not exist, create repository.
   uses: deploy-actions/build-push-ecr@main
   with:
     Name: simple-api
-    Tags: v1.0.0 latest
+    Tags: v1.0.0
+    IfNotExist: v1.0.0
     Path: ./app
     Dockerfile: ./app/Dockerfile_lambda
 
