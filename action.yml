@@ -1,0 +1,79 @@
+name: Build & Push Docker Image to Amazon ECR 🐳
+description: Github Action to Build & Push Docker Image to Amazon ECR
+branding:
+  icon: anchor
+  color: orange
+
+inputs:
+  Name:
+    description: ECR Repository Name
+    required: true
+  Tags:
+    description: Docker Image Tags
+    required: false
+  IfNotExist:
+    description: If the provided image tag already exists, the action will be canceled.
+    required: false
+  Path:
+    description: Relative Path of Dockerfile, relative to the github repository root.
+    required: false
+    default: "."
+  Dockerfile:
+    description: Dockerfile Name
+    required: false
+    default: "Dockerfile"
+
+runs:
+  using: composite
+
+  steps:
+    - shell: bash
+      run: aws sts get-caller-identity >/dev/null 2>&1
+
+    - id: ecr
+      uses: aws-actions/amazon-ecr-login@main
+
+    # create if not exist repository
+    - shell: bash
+      run: |
+        if ! aws ecr describe-repositories --repository-name ${{ inputs.Name }} >/dev/null 2>&1; then
+          aws ecr create-repository --repository-name ${{ inputs.Name }}
+          echo "::notice title=ECR Repository Created::${{ steps.ecr.outputs.registry }}/${{ inputs.Name }}"
+        fi
+
+    # cancel if tag already exists.
+    - shell: bash
+      run: |
+        if [ -z "${{ inputs.IfNotExist }}" ]; then
+          if aws ecr describe-images --repository-name ${{ inputs.Name }} --image-ids imageTag=${{ inputs.IfNotExist }} >/dev/null 2>&1; then
+            exit 0
+          fi
+        fi
+
+    - shell: bash
+      id: image
+      run: |
+        Image=${{ steps.ecr.outputs.registry }}/${{ inputs.Name }}
+        docker build -t $Image -f "${{ inputs.Dockerfile }}" "${{ inputs.Path }}"
+
+        raw_tags=($(echo "${{ inputs.Tags }}" | tr ',' ' '))
+
+        tags=()
+        for tag in "${raw_tags[@]}"; do
+          [[ -n "$tag" ]] && tags+=("$tag")
+        done
+
+        docker push $Image
+
+        for tag in "${tags[@]}"; do
+          docker tag $Image $Image:$tag
+          docker push $Image:$tag
+        done
+
+        DIGEST=$(aws ecr describe-images --repository-name ${{ inputs.Name }} --query 'sort_by(imageDetails, &imagePushedAt)[-1].imageDigest' --output text)
+        echo "uri=$Image@$DIGEST" >> "$GITHUB_OUTPUT"
+
+  outputs:
+    ImageUri:
+      description: Docker Image URI
+      value: ${{ steps.image.outputs.uri }}
