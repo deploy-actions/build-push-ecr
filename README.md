@@ -33,7 +33,7 @@ If the specified ECR Repository does not exist, create repository.
     ImageUri: ${{ steps.image.outputs.ImageUri }}
 ```
 
-## Options
+## Inputs
 
 | Name          | Description                                                                                                        | Mandatory | Default    |
 | ------------- | ------------------------------------------------------------------------------------------------------------------ | --------- | ---------- |
